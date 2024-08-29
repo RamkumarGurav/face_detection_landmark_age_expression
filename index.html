@@ -40,18 +40,17 @@ faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
 ]).then(webCam);
 
 function webCam() {
-navigator.mediaDevices
-.getUserMedia({
-  video: true,
-  audio: false,
-})
-.then((stream)
- => {
-  video.srcObject = stream;
-})
-.catch((error) => {
-  console.log(error);
-});
+  navigator.mediaDevices
+    .getUserMedia({
+      video: true,
+      audio: false,
+    })
+    .then((stream) => {
+      video.srcObject = stream;
+    })
+    .catch((error) => {
+      console.log(error);
+    });
 }
 
 video.addEventListener("play", () => {
