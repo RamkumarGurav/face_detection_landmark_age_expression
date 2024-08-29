@@ -81,16 +81,19 @@ window.addEventListener("load", async function () {
 });
 
 async function loadLabeledImages() {
-    const labels = ['employee1', 'employee2', 'employee3', ...]; // Add all employee names here
+  const user_employee_data=[
+    {user_employee_id:4,name:"Guru Hugar",user_employee_custom_id:"emp111",profile_image:"profile_image_4.jpg"},
+    {user_employee_id:5,name:"Vikas Hugar",user_employee_custom_id:"emp222",profile_image:"profile_image_5.jpg"},
+    {user_employee_id:14,name:"ramkumar gurav",user_employee_custom_id:"emp333",profile_image:"profile_image_14.jpg"},
+  ];
+    const labels = ['emp111', 'emp222', 'emp333']; // Add all employee names here
     return Promise.all(
-        labels.map(async (label) => {
+      user_employee_data.map(async (label) => {
             const descriptions = [];
-            for (let i = 1; i <= 2; i++) { // Assume each employee has 2 images
-                const img = await faceapi.fetchImage(`/employees/${label}/image${i}.jpg`);
+                const img = await faceapi.fetchImage(`http://192.168.1.33/xampp/MARS/atm_v100/assets/uploads/user_employee/profile_image/${label.profile_image}`);
                 const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
-                descriptions.push(detections.descriptor);
-            }
-            return new faceapi.LabeledFaceDescriptors(label, descriptions);
+                descriptions.push(detections.descriptor); 
+            return new faceapi.LabeledFaceDescriptors(label.name, descriptions);
         })
     );
 }
