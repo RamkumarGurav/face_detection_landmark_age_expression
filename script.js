@@ -63,3 +63,7 @@ video.addEventListener("play", () => {
   }, 50); // Reduced interval for quicker detection
 });
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 60d7b26e8d52219bd6fef9a027efa84b4cc92bcd

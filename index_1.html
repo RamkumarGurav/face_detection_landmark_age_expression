@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Face Recognition</title>
+    <script defer src="face-api.min.js"></script>
+</head>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+    }
+    canvas {
+        position: absolute;
+    }
+</style>
+<body>
+    <video id="video" width="640" height="480" autoplay muted></video>
+    <div id="loading" style="position: absolute; top: 10px; left: 10px;">Loading models...</div>
+</body>
+<script>
+window.addEventListener("load", async function () {
+    const video = document.getElementById("video");
+    const loadingMessage = document.getElementById("loading");
+
+    // Load models
+    await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
+        faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
+        faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
+    ]);
+
+    // Load labeled images
+    const labeledFaceDescriptors = await loadLabeledImages();
+    const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6);
+
+    // Start webcam
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false }).then((stream) => {
+        video.srcObject = stream;
+        loadingMessage.style.display = 'none'; // Hide loading message when webcam starts
+    }).catch((error) => {
+        console.error("Error accessing webcam:", error);
+    });
+
+    video.addEventListener("play", () => {
+        const canvas = faceapi.createCanvasFromMedia(video);
+        document.body.append(canvas);
+        faceapi.matchDimensions(canvas, { height: video.height, width: video.width });
+
+        setInterval(async () => {
+            const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+                .withFaceLandmarks()
+                .withFaceDescriptors();
+
+            const resizedDetections = faceapi.resizeResults(detections, {
+                height: video.height,
+                width: video.width,
+            });
+
+            canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+
+            resizedDetections.forEach((detection) => {
+                const box = detection.detection.box;
+                const drawBox = new faceapi.draw.DrawBox(box);
+                drawBox.draw(canvas);
+
+                const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
+                const text = bestMatch.toString();
+                const drawText = new faceapi.draw.DrawTextField([text], box.bottomLeft);
+                drawText.draw(canvas);
+            });
+        }, 100);
+    });
+});
+
+async function loadLabeledImages() {
+  const user_employee_data=[
+    {user_employee_id:4,name:"Guru Hugar",user_employee_custom_id:"emp111",profile_image:"profile_image_4.jpg"},
+    {user_employee_id:5,name:"Vikas Hugar",user_employee_custom_id:"emp222",profile_image:"profile_image_5.jpg"},
+    {user_employee_id:14,name:"ramkumar gurav",user_employee_custom_id:"emp333",profile_image:"profile_image_14.jpg"},
+  ];
+    const labels = ['emp111', 'emp222', 'emp333']; // Add all employee names here
+    return Promise.all(
+      user_employee_data.map(async (label) => {
+            const descriptions = [];
+                const img = await faceapi.fetchImage(`http://192.168.1.33/xampp/MARS/atm_v100/assets/uploads/user_employee/profile_image/${label.profile_image}`);
+                const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+                descriptions.push(detections.descriptor); 
+            return new faceapi.LabeledFaceDescriptors(label.name, descriptions);
+        })
+    );
+}
+</script>
+</html>
